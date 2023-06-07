@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>you are here</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            background-color: #1a1a1a;
+            color: #CE3265;
+            font-family: 'Source Code Pro', monospace;
+            padding-left:5rem;
+            padding-right:5rem;
+        }
+
+        #map {
+            height: 300px;
+            border: solid #CE3265;
+            box-shadow: 0 0 2px #ff006ccc;
+        }
+
+        #content{
+            border-style: solid;
+            margin-top: 2.5rem;
+            padding-left: 2rem;
+            padding-top: .5rem;
+            padding-bottom: .5rem;
+            box-shadow: 0 0 2px #ff006ccc;
+        }
+
+        h2, p {
+            text-shadow: 0 0 2px #ff006ccc;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="content">
+    <h2>you are here:</h2>
+        <p id="ip"></p>
+        <p id="location"></p>
+        <p id="datetime"></p>
+        <p id="datetime-utc"></p>
+    </div>
+
+
+    <script>
+        async function fetchIPandLocation() {
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                const ip = ipData.ip;
+                document.getElementById('ip').textContent = 'IP: ' + ip;
+
+                const geoResponse = await fetch('https://ipapi.co/' + ip + '/json/');
+                const geoData = await geoResponse.json();
+                const country = geoData.country_name;
+                const city = geoData.city;
+                document.getElementById('location').textContent = 'Location: ' + city + ', ' + country;
+
+                return geoData;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        fetchIPandLocation().then(geoData => {
+            const map = L.map('map').setView([geoData.latitude, geoData.longitude], 2);
+            L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}{r}.{ext}', {
+                attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>',
+                subdomains: 'abcd',
+                minZoom: 4,
+                maxZoom: 20,
+                ext: 'png'
+            }).addTo(map);
+            L.marker([geoData.latitude, geoData.longitude]).addTo(map);
+        });
+
+        document.getElementById('datetime').textContent = 'Date/Time [LOCAL]: ' + new Date().toLocaleString();
+        document.getElementById('datetime-utc').textContent = 'Date/Time [UTC]: ' + new Date().toISOString().replace('T', ' ').slice(0, -5);
+    </script>
+</body>
+</html>
